@@ -1,0 +1,14 @@
+{
+  "name": "lomas1-360",
+  "version": "1.0.0",
+  "description": "Plano 360° y CRM de Lomas de Yanamayo I",
+  "private": true,
+  "scripts": {
+    "sync-tour": "python tools/sync_tour.py",
+    "build": "esbuild crm/app.jsx --outfile=crm/app.js --target=es2020",
+    "zip": "python tools/build_zip.py"
+  },
+  "devDependencies": {
+    "esbuild": "latest"
+  }
+}

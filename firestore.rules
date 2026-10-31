@@ -1,0 +1,75 @@
+rules_version = '2';
+
+// Lomas de Yanamayo I - proyecto Firebase "sol-de-yanamayo"
+//
+// Colecciones:
+//   lotes/{id}       lectura pública. Admin: todo. Asesor: solo cambia el estado (ver abajo).
+//   config/{doc}     lectura pública (nunca contiene usuarios ni contraseñas). Escritura: admin.
+//   usuarios/{uid}   { role: 'admin' | 'asesor', name, email, color?, active? }
+//                    lo lee el propio usuario o un admin; solo un admin lo escribe.
+//                    El PRIMER admin se crea a mano en la consola (esto no pasa por las reglas).
+//
+// Las contraseñas viven solo en Firebase Authentication, nunca en Firestore.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function hasProfile() {
+      return signedIn() && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    function profile() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    // "active" es opcional: si falta, la cuenta se considera activa.
+    function isActive() {
+      return profile().get('active', true) != false;
+    }
+
+    function isAdmin() {
+      return hasProfile() && profile().role == 'admin' && isActive();
+    }
+
+    function isAsesor() {
+      return hasProfile() && profile().role == 'asesor' && isActive();
+    }
+
+    // Un asesor solo puede:
+    //  - tocar estos campos: status, color, statusDate, asesor, asesorUid
+    //    (precio, área y nombre del lote son solo del admin)
+    //  - actuar sobre un lote que estaba 'disponible' o que ya es suyo (asesorUid == su uid)
+    //  - dejar el lote 'disponible' sin asesor, o 'reservado'/'vendido' a su propio nombre y uid
+    function asesorMayUpdate() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return after.diff(before).affectedKeys().hasOnly(['status', 'color', 'statusDate', 'asesor', 'asesorUid'])
+        && after.status in ['disponible', 'reservado', 'vendido']
+        && (before.get('status', 'disponible') == 'disponible'
+            || before.get('asesorUid', null) == request.auth.uid)
+        && (after.status == 'disponible'
+            ? (after.get('asesorUid', null) == null && after.get('asesor', '') == '')
+            : (after.get('asesorUid', null) == request.auth.uid && after.get('asesor', '') == profile().name));
+    }
+
+    match /lotes/{lotId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isAsesor() && asesorMayUpdate());
+    }
+
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /usuarios/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,13 @@
+# Lo que NO se sube a Vercel (el sitio es estático: index.html + crm/ + tour/ + img/)
+tools/
+dist/
+node_modules/
+.claude/
+crm/*.jsx
+package.json
+package-lock.json
+firebase.json
+firestore.rules
+.firebaserc
+.htaccess
+README.md

@@ -1,0 +1,6 @@
+# Imágenes del tour: cache largo. El player agrega ?v=<fecha del export> a cada URL.
+<IfModule mod_headers.c>
+  <FilesMatch ".*">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>

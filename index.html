@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Plano 360° - Lomas de Yanamayo I</title>
+    <meta name="description" content="Plano Interactivo 360° del proyecto Lomas de Yanamayo I. Consulta la disponibilidad de lotes, áreas y estado en tiempo real.">
+
+    <!-- Favicon & PWA Meta Tags -->
+    <meta name="theme-color" content="#111111">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lomas Yanamayo I">
+    <link rel="icon" type="image/png" href="img/icon-192.png">
+    <link rel="apple-touch-icon" href="img/icon-192.png">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Open Graph / Redes Sociales (Facebook, WhatsApp, etc.) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Plano 360° - Lomas de Yanamayo I">
+    <meta property="og:description" content="Plano Interactivo 360° del proyecto Lomas de Yanamayo I. Consulta la disponibilidad de lotes, áreas y estado en tiempo real.">
+    <meta property="og:image" content="img/icon-512.png">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Plano 360° - Lomas de Yanamayo I">
+    <meta name="twitter:description" content="Plano Interactivo 360° del proyecto Lomas de Yanamayo I. Consulta la disponibilidad de lotes, áreas y estado en tiempo real.">
+    <meta name="twitter:image" content="img/icon-512.png">
+
+    <!-- Fuentes de Google: Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (Diseño) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                    },
+                    fontWeight: {
+                        black: '800',
+                        extrabold: '800',
+                        bold: '700',
+                        semibold: '600',
+                        medium: '500',
+                        normal: '400',
+                    },
+                    letterSpacing: {
+                        tighter: '-0.01em',
+                        tight: '0px',
+                        normal: '0.015em',
+                        wide: '0.025em',
+                        wider: '0.035em',
+                        widest: '0.05em',
+                    },
+                    colors: {
+                        gray: {
+                            800: '#313131', /* Fondo claro (tarjetas) en modo oscuro */
+                            850: '#262626',
+                            900: '#1f1f1f', /* Menú lateral y fondos principales */
+                            950: '#141414', /* Fondo absoluto del mapa o body */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Tipografía Montserrat en todo el CRM con espaciado sutil y equilibrado */
+        *, *::before, *::after, html, body, input, button, select, textarea {
+            font-family: 'Montserrat', sans-serif !important;
+            letter-spacing: 0.015em;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Grosor equilibrado de negritas */
+        b, strong, .font-black, .font-extrabold {
+            font-weight: 800 !important;
+        }
+
+        .font-bold {
+            font-weight: 700 !important;
+        }
+
+        .font-semibold {
+            font-weight: 600 !important;
+        }
+
+        /* Espaciado sutil y legible para textos en mayúsculas y etiquetas */
+        .uppercase {
+            letter-spacing: 0.035em !important;
+        }
+
+        /* Tamaño base de fuente equilibrado y adaptable */
+        html {
+            font-size: 15px !important;
+        }
+    </style>
+
+    <!-- PapaParse y jsPDF diferidos (no bloquean la carga inicial) -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        /* Ajuste para que el tour no tenga scroll en móviles detrás del modal */
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        @keyframes blurFadeIn {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, 20px) scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+            }
+        }
+
+        .animate-blur-fade {
+            animation: blurFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes expandIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .animate-expand {
+            animation: expandIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans m-0 p-0 overflow-hidden transition-colors duration-300">
+
+    <div id="root"></div>
+
+    <script type="module" src="crm/app.js?v=1"></script>
+</body>
+
+</html>

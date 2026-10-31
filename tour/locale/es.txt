@@ -1,0 +1,13 @@
+#: locale=es
+
+## Media
+
+### Título
+panorama_6BE1679F_6AE2_8652_41EB_6FA7CD62DE96.label = LOMAS DE YANAMAYO I
+
+## Tour
+
+### Descripción
+
+### Título
+tour.name = LOMAS DE YANAMAYO I

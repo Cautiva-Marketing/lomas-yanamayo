@@ -1,0 +1,6 @@
+# Librerías del player 3DVista: cache largo. Se piden con ?v=<fecha del export>.
+<IfModule mod_headers.c>
+  <FilesMatch ".*">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
