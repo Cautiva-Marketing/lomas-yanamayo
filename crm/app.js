@@ -521,12 +521,14 @@ function App() {
   const handleUpdateLot = async (lotId, field, value) => {
     if (!isAgent) return;
     const lot = lots.find((l) => l.id === lotId);
-    if (!lot) {
+    const catalogLot = !lot && isKnownLotId(lotId) ? LotesIniciales.find((l) => l.id === lotId) : null;
+    if (!lot && !(isAdmin && catalogLot)) {
       setToastMessage({ type: "error", text: 'Este lote a\xFAn no existe en la base de datos. Pide al administrador que pulse "Sincronizar" en la lista de lotes.' });
       return;
     }
-    if (!canEditLot(lot)) {
-      setToastMessage({ type: "error", text: `Este lote est\xE1 asignado a ${lot.asesor || "otro asesor"}. Solo ese asesor o el administrador pueden modificarlo.` });
+    const targetLot = lot || catalogLot;
+    if (!canEditLot(targetLot)) {
+      setToastMessage({ type: "error", text: `Este lote est\xE1 asignado a ${targetLot.asesor || "otro asesor"}. Solo ese asesor o el administrador pueden modificarlo.` });
       return;
     }
     if (!isAdmin && field !== "status") return;
@@ -543,7 +545,11 @@ function App() {
           updates.asesorUid = currentUser.id;
         }
       }
-      await updateDoc(getLotDoc(lotId), updates);
+      if (lot) {
+        await updateDoc(getLotDoc(lotId), updates);
+      } else {
+        await setDoc(getLotDoc(lotId), { ...catalogLot, ...updates }, { merge: true });
+      }
     } catch (error) {
       console.error("Error actualizando:", error);
       setToastMessage({ type: "error", text: error.code === "permission-denied" ? "No se pudo guardar: otro asesor tom\xF3 este lote o no tienes permiso." : "No se pudo guardar el cambio. Int\xE9ntalo de nuevo." });
@@ -868,9 +874,12 @@ function App() {
   }, [lots, asesoresList, activeStatuses, usersList]);
   const currentSelectedLot = useMemo(() => {
     if (!selectedLotId) return null;
-    return lots.find((l) => l.id === selectedLotId) || {
+    const fromDb = lots.find((l) => l.id === selectedLotId);
+    if (fromDb) return fromDb;
+    const fromCatalog = LotesIniciales.find((l) => l.id === selectedLotId);
+    return fromCatalog || {
       id: selectedLotId,
-      name: `Lote ${selectedLotId}`,
+      name: getAutoLotName(selectedLotId) || `Lote ${selectedLotId}`,
       price: 0,
       area: 0,
       status: "disponible",
